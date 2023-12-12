@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Yard Map - Heartland</title>
+    <!--  Jquery ui    -->
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css"
+    />
+    <style>
+      .ui-autocomplete {
+        z-index: 45001;
+        height: 200px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+      }
+
+      .background_image_map {
+        z-index: 1;
+        cursor: move;
+      }
+
+      .data_cont {
+        width: 350px;
+
+        background-color: #fff;
+        display: none;
+        border: 1px solid #000000;
+        font-size: 14px;
+        z-index: 45001;
+      }
+
+      .data_cont_tbl_popup {
+        height: 300px;
+        overflow-y: scroll;
+      }
+
+      .data_cont header {
+        background-color: #000000;
+        color: #ffffff;
+        padding: 10px;
+      }
+      .data_cont.data_cont_tbl {
+        padding: 10px;
+      }
+      .legend_text {
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.6);
+        z-index: 9999999999;
+        background-image: url(ajax-loader.gif);
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .legend_square {
+        margin-right: 5px;
+        width: 20px;
+        height: 20px;
+        float: left;
+      }
+
+      .color_legends span,
+      td {
+        font-size: 14px;
+        font-family: Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      .button {
+        background-color: #f44336; /* Green */
+        border: none;
+        color: white;
+        padding: 7px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      input,
+      select {
+        padding: 5px;
+      }
+
+      .search_cont span {
+        font-family: Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      .ui-tooltip,
+      .arrow:after {
+        background: black;
+        border: 1px solid white;
+      }
+      .ui-tooltip {
+        padding: 5px 10px;
+        color: white;
+        border-radius: 0px;
+        font: bold 12px "Helvetica Neue", Sans-Serif;
+        text-transform: uppercase;
+        box-shadow: 0 0 7px black;
+      }
+      .arrow {
+        width: 50px;
+        height: 16px;
+        overflow: hidden;
+        position: absolute;
+        left: 50%;
+        margin-left: -35px;
+        bottom: -16px;
+      }
+      .arrow.top {
+        top: -16px;
+        bottom: auto;
+      }
+      .arrow.left {
+        left: 20%;
+      }
+      .arrow:after {
+        content: "";
+        position: absolute;
+        left: 20px;
+        top: -20px;
+        width: 25px;
+        height: 25px;
+        box-shadow: 6px 5px 9px -9px black;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+      }
+      .arrow.top:after {
+        bottom: -20px;
+        top: auto;
+      }
+
+      .swal-option {
+        width: 94% !important;
+        box-sizing: border-box;
+        border-radius: 3px;
+        border: 1px solid #d7d7d7;
+        height: 43px;
+        margin-top: 10px;
+        margin-bottom: 17px;
+        margin-left: 10px;
+        font-size: 18px;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06);
+        padding: 0 12px;
+        display: block !important;
+        -webkit-transition: all 0.3s;
+        transition: all 0.3s;
+      }
+
+      .header {
+        height: 100px;
+        position: fixed;
+        top: 0;
+        background: white;
+        left: 0px;
+        box-shadow: 0px 2px 5px #888888;
+        z-index: 45000;
+        padding: 5px;
+      }
+
+      .footer {
+        height: 20px;
+        position: fixed;
+        bottom: 0;
+        background: white;
+        left: 0px;
+        box-shadow: 0px -2px 4px #888888;
+        z-index: 45000;
+        padding: 5px;
+      }
+
+      #body {
+        margin-top: 100px;
+      }
+
+      .sidenav {
+        width: 80px;
+        height: 100%;
+
+        position: fixed;
+        z-index: 10000;
+        top: 100px;
+        left: 0;
+        background-color: #fff;
+        overflow-x: hidden;
+        padding: 15px 10px;
+        transition: 0.5s;
+        box-shadow: 3px 5px 5px #888;
+      }
+
+      .sidenav .menu-items {
+        margin: 10px 0px;
+        font-family: Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        border-bottom: 1px solid #d9d9d9;
+        padding: 5px;
+      }
+      .sidenav .menu-items a {
+        text-decoration: none;
+        color: dimgrey;
+        font-size: 13px;
+      }
+
+      .sidenav .menu-items a:hover {
+        text-decoration: none;
+        color: #f44336;
+      }
+
+      .location_trailer {
+        text-decoration: none;
+        font-weight: 400;
+        /*background-color: white;*/
+      }
+
+      /*For blinking effect*/
+      .blinking {
+        animation: blinker 1s linear infinite;
+      }
+
+      @keyframes blinker {
+        50% {
+          opacity: 0;
+        }
+      }
+      /*For blinking effect*/
+
+      .hidden-location {
+        display: none;
+      }
+
+      .pending_request_section {
+        text-align: center;
+        font-style: italic;
+      }
+
+      #context_menu_popup {
+        width: 350px;
+        height: 60px;
+        background-color: white;
+        border: 1px solid black;
+        display: none;
+        z-index: 200;
+        padding: 5px;
+      }
+
+      #context_menu_popup i {
+        color: red;
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+
+        margin: 8.15px 0;
+      }
+      input[type="range"]:focus {
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4.7px;
+        cursor: pointer;
+        box-shadow: 0px 0px 1.9px #000000, 0px 0px 0px #0d0d0d;
+        background: #ffffff;
+        border-radius: 21px;
+        border: 0px solid #010101;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        box-shadow: 0px 0px 3px #000000, 0px 0px 0px #0d0d0d;
+        border: 0.2px solid #000000;
+        height: 21px;
+        width: 13px;
+        border-radius: 12px;
+        background: #ffffff;
+        cursor: pointer;
+        -webkit-appearance: none;
+        margin-top: -8.15px;
+      }
+      input[type="range"]:focus::-webkit-slider-runnable-track {
+        background: #ffffff;
+      }
+      input[type="range"]::-moz-range-track {
+        width: 100%;
+        height: 4.7px;
+        cursor: pointer;
+        box-shadow: 0px 0px 1.9px #000000, 0px 0px 0px #0d0d0d;
+        background: #ffffff;
+        border-radius: 21px;
+        border: 0px solid #010101;
+      }
+      input[type="range"]::-moz-range-thumb {
+        box-shadow: 0px 0px 3px #000000, 0px 0px 0px #0d0d0d;
+        border: 0.2px solid #000000;
+        height: 21px;
+        width: 13px;
+        border-radius: 12px;
+        background: #ffffff;
+        cursor: pointer;
+      }
+      input[type="range"]::-ms-track {
+        width: 100%;
+        height: 4.7px;
+        cursor: pointer;
+        background: transparent;
+        border-color: transparent;
+        color: transparent;
+      }
+      input[type="range"]::-ms-fill-lower {
+        background: #f2f2f2;
+        border: 0px solid #010101;
+        border-radius: 42px;
+        box-shadow: 0px 0px 1.9px #000000, 0px 0px 0px #0d0d0d;
+      }
+      input[type="range"]::-ms-fill-upper {
+        background: #ffffff;
+        border: 0px solid #010101;
+        border-radius: 42px;
+        box-shadow: 0px 0px 1.9px #000000, 0px 0px 0px #0d0d0d;
+      }
+      input[type="range"]::-ms-thumb {
+        box-shadow: 0px 0px 3px #000000, 0px 0px 0px #0d0d0d;
+        border: 0.2px solid #000000;
+        height: 21px;
+        width: 13px;
+        border-radius: 12px;
+        background: #ffffff;
+        cursor: pointer;
+        height: 4.7px;
+      }
+      input[type="range"]:focus::-ms-fill-lower {
+        background: #ffffff;
+      }
+      input[type="range"]:focus::-ms-fill-upper {
+        background: #ffffff;
+      }
+
+      .tablePendingReq {
+        width: 100%;
+        border: 1px solid grey;
+        border-collapse: collapse;
+      }
+
+      .tablePendingReq td {
+        padding: 5px;
+      }
+
+      .tablePendingReq .PendingReqHeader {
+        padding: 20px;
+      }
+
+      .pendingReqDiv {
+        width: 742px;
+        height: 300px;
+        position: absolute;
+        top: 441px;
+        left: 172px;
+        overflow-y: scroll;
+      }
+
+      .pendingReqDiv {
+        border: 1px solid grey;
+        border-collapse: collapse;
+      }
+
+      .pendingReqDiv table tr td {
+        border: 1px solid grey;
+        border-collapse: collapse;
+        text-align: center;
+      }
+
+      .pendingReqDiv td,
+      th {
+        padding: 10px;
+      }
+
+      .pendingReqTableHeader {
+        background-color: #ef444c;
+        color: white;
+        font-family: arial;
+      }
+
+      .swal-modal {
+        width: 600px !important;
+      }
+    </style>
+
+    <link
+      href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+      integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+      crossorigin="anonymous"
+    />
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <!---Header---->
+      <div class="header" style="">
+        <div class="color_legends">
+          <table width="1280" border="0">
+            <tbody>
+              <tr id="statusLegend">
+                <!--<td width="85" class="legend_text">Status:</td>-->
+                <td>
+                  <span style="color: #dadada" class="legend_text"
+                    ><div
+                      class="legend_square"
+                      style="background: #dadada"
+                    ></div>
+                    Missing Status</span
+                  >
+                </td>
+                <!--  <td width="85"><span style="color:#ff0000" class="legend_text"><div class="legend_square_red" ></div>Empty</span></td>
+				  <td width="97"><span style="color:#d04372" class="legend_text"><div class="legend_square_green" ></div>Loaded</span></td>
+				  <td width="109"><span style="color:#9aff73" class="legend_text"><div class="legend_square_grey" ></div>Unloading</span></td>
+				  <td width="105"><span style="color:#ff00ff" class="legend_text"><div class="legend_square_purple" ></div>Loading</span></td>
+				  <td width="153"><span style="color:#00ffff" class="legend_text"><div class="legend_square_brown" ></div>Out of Service</span></td>
+				  <td width="176"><span style="color:#000066" class="legend_text"><div class="legend_square_orange" ></div> Loaded Outbound</span></td>
+				  <td width="145"><span style="color:#006600" class="legend_text"><div class="legend_square_loaded_inbound" ></div> Loaded Inbound</span></td>
+				  <td width="296"><span style="color:#FF6347" class="legend_text"><div class="legend_square_loaded_storage" ></div> Loaded Storage</span></td>-->
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="search_cont">
+          <br />
+          <span>Search</span>
+          <span>
+            <select id="search_type">
+              <option value="trailer_id">Trailer ID</option>
+
+              <!--  <option value="route">Route</option>-->
+            </select>
+          </span>
+          <input
+            type="text"
+            id="search_trailer"
+            placeholder="Enter Trailer Number"
+            onKeyPress="search_autocomplete()"
+            onPaste="search_autocomplete()"
+            style="width: 220px"
+          />
+          <button type="button" id="trailer_search_btn" class="button" disabled>
+            Search
+          </button>
+
+          <span>Status:</span>
+          <select id="view_by_status">
+            <option value="ALL">All</option>
+            <!-- Other values will be loaded through Javascript -->
+          </select>
+
+          <span style="color: brown" id="reload_timer">Loading...</span>
+          <span
+            >Zoom:<input
+              type="range"
+              class="zoom-in"
+              min="0.5"
+              max="3"
+              step="0.1"
+              value="1"
+          /></span>
+        </div>
+      </div>
+      <!-- <div class="sidenav" >
+  	<div class="row">
+  		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="361" left_loc="331">Magnolia Dock</a></div>
+  		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="361" left_loc="532">Chassis Dock</a></div>
+  		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="607" left_loc="204">Seat Dock</a></div>
+		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="394" left_loc="1302">Assembly Dock</a></div>
+		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="788" left_loc="1006">Weld Dock</a></div>
+		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="359" left_loc="1363">NA Yard</a></div>
+		<div class="menu-items"><a href="javascript:void(0);" class="map-menu" top_loc="346" left_loc="1692">OS Yard</a></div>
+	  </div>
+  	</div>-->
+    </div>
+    <!---Header---->
+    <!--Container for data-->
+    <div class="data_cont" id="data_container">
+      <header align="center">Trailer Information</header>
+      <div class="data_cont_tbl">
+        <table width="100%" border="0">
+          <tbody>
+            <tr>
+              <td width="100%">No Data Found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="data_cont" id="data_container_popup">
+      <header align="center">
+        Trailer Information
+        <span
+          id="close_trailer_popup"
+          style="color: #fff; float: right; cursor: pointer"
+          >X</span
+        >
+      </header>
+      <div class="data_cont_tbl_popup">
+        <table width="100%" border="0">
+          <tbody>
+            <tr>
+              <td width="100%">No Data Found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!--CONTAINER FOR LOCATION -->
+
+    <div class="data_cont" id="loc_data_container_popup">
+      <header align="center">
+        Trailers in Location
+        <span
+          id="loc_close_trailer_popup"
+          style="color: #fff; float: right; cursor: pointer"
+          >X</span
+        >
+      </header>
+      <div
+        class="loc_data_cont_tbl_popup"
+        style="height: 364px; overflow-y: scroll"
+      >
+        <table width="100%" border="0">
+          <tbody>
+            <tr>
+              <td width="100%">No Data Found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="" id="context_menu_popup">
+      <!--<header align="center">Trailers in Location	<span  id="loc_close_trailer_popup"  style="color:#FFF;float:right;cursor:pointer;">X</span></header>-->
+      <table width="100%" border="0">
+        <tbody>
+          <tr>
+            <td>
+              <i class="fa fa-truck fa-2x" aria-hidden="true"></i>
+              <p>Option 1</p>
+            </td>
+            <td>
+              <i class="fa fa-bars fa-2x" aria-hidden="true"></i>
+              <p>Option 2</p>
+            </td>
+            <td>
+              <i class="fa fa-truck fa-2x" aria-hidden="true"></i>
+              <p>Option 3</p>
+            </td>
+            <td>
+              <i class="fa fa-bars fa-2x" aria-hidden="true"></i>
+              <p>Option 4</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+
+
+    <!--Container for data-->
+
+    <!---Body---->
+	<div id="body" class="">
+		<img src="map-background.jpg" width="2000" alt="" class="background_image_map" id="MapBackground">
+  
+		<!-- D1 TO D68 -->
+		<div id="MC_D001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 313px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="313" original-left="189"></div>
+		<div id="MC_D002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 327px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="327" original-left="189"></div>
+		<div id="MC_D003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 342px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="342" original-left="189"></div>
+		<div id="MC_D004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 356px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="356" original-left="189"></div>
+		<div id="MC_D005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 370px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="370" original-left="189"></div>
+		<div id="MC_D006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 385px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="385" original-left="189"></div>
+		<div id="MC_D007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 399px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="399" original-left="189"></div>
+		<div id="MC_D008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 414px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="414" original-left="189"></div>
+		<div id="MC_D009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 428px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="428" original-left="189"></div>
+		<div id="MC_D010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 443px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="443" original-left="189"></div>
+		<div id="MC_D011" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 457px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="457" original-left="189"></div>
+		<div id="MC_D012" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 471px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="471" original-left="189"></div>
+		<div id="MC_D013" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 486px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="486" original-left="189"></div>
+		<div id="MC_D014" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 500px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="500" original-left="189"></div>
+		<div id="MC_D015" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 515px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="515" original-left="189"></div>
+		<div id="MC_D016" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 529px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="529" original-left="189"></div>
+		<div id="MC_D017" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 544px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="544" original-left="189"></div>
+		<div id="MC_D018" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 558px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="558" original-left="189"></div>
+		<div id="MC_D019" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 572px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="572" original-left="189"></div>
+		<div id="MC_D020" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 587px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="587" original-left="189"></div>
+		<div id="MC_D021" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 601px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="601" original-left="189"></div>
+		<div id="MC_D022" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 616px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="616" original-left="189"></div>
+		<div id="MC_D023" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 630px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="630" original-left="189"></div>
+		<div id="MC_D024" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 645px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="645" original-left="189"></div>
+		<div id="MC_D025" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 659px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="659" original-left="189"></div>
+		<div id="MC_D026" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 673px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="673" original-left="189"></div>
+		<div id="MC_D027" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 688px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="688" original-left="189"></div>
+		<div id="MC_D028" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 702px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="702" original-left="189"></div>
+		<div id="MC_D029" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 717px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="717" original-left="189"></div>
+		<div id="MC_D030" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 731px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="731" original-left="189"></div>
+		<div id="MC_D031" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 746px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="746" original-left="189"></div>
+		<div id="MC_D032" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 760px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="760" original-left="189"></div>
+		<div id="MC_D033" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 774px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="774" original-left="189"></div>
+		<div id="MC_D034" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 789px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="789" original-left="189"></div>
+		<div id="MC_D035" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 803px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="803" original-left="189"></div>
+		<div id="MC_D036" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 818px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="818" original-left="189"></div>
+		<div id="MC_D037" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 832px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="832" original-left="189"></div>
+		<div id="MC_D038" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 846px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="846" original-left="189"></div>
+		<div id="MC_D039" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 861px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="861" original-left="189"></div>
+		<div id="MC_D040" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 875px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="875" original-left="189"></div>
+		<div id="MC_D041" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 890px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="890" original-left="189"></div>
+		<div id="MC_D042" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 904px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="904" original-left="189"></div>
+		<div id="MC_D043" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 919px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="919" original-left="189"></div>
+		<div id="MC_D044" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 705px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="705" original-left="505"></div>
+		<div id="MC_D045" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 690px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="690" original-left="505"></div>
+		<div id="MC_D046" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 676px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="676" original-left="505"></div>
+		<div id="MC_D047" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 661px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="661" original-left="505"></div>
+		<div id="MC_D048" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 647px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="647" original-left="505"></div>
+		<div id="MC_D049" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 590px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="590" original-left="505"></div>
+		<div id="MC_D050" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 575px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="575" original-left="505"></div>
+		<div id="MC_D051" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 560px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="560" original-left="505"></div>
+		<div id="MC_D052" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 546px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="546" original-left="505"></div>
+		<div id="MC_D053" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 532px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="532" original-left="505"></div>
+		<div id="MC_D054" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 517px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="517" original-left="505"></div>
+		<div id="MC_D055" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 503px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="503" original-left="505"></div>
+		<div id="MC_D056" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 488px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="488" original-left="505"></div>
+		<div id="MC_D057" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 474px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="474" original-left="505"></div>
+		<div id="MC_D058" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 459px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="459" original-left="505"></div>
+		<div id="MC_D059" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 445px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="445" original-left="505"></div>
+		<div id="MC_D060" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 431px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="431" original-left="505"></div>
+		<div id="MC_D061" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 416px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="416" original-left="505"></div>
+		<div id="MC_D062" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 402px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="402" original-left="505"></div>
+		<div id="MC_D063" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 387px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="387" original-left="505"></div>
+		<div id="MC_D064" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 373px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="373" original-left="505"></div>
+		<div id="MC_D065" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 359px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="359" original-left="505"></div>
+		<div id="MC_D066" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 344px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="344" original-left="505"></div>
+		<div id="MC_D067" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 330px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="330" original-left="505"></div>
+		<div id="MC_D068" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 505px;
+			top: 315px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="315" original-left="505"></div>
+  
+		<!-- DS  -->
+		<div id="MC_DS001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 452px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="452"></div>
+		<div id="MC_DS002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 474px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="474"></div>
+		<div id="MC_DS003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 409px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="409"></div>
+		<div id="MC_DS004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 431px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="431"></div>
+		<div id="MC_DS005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 367px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="367"></div>
+		<div id="MC_DS006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 389px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="389"></div>
+		<div id="MC_DS007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 324px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="324"></div>
+		<div id="MC_DS008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 345px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="345"></div>
+		<div id="MC_DS009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 281px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="281"></div>
+		<div id="MC_DS010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 301px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="301"></div>
+		<div id="MC_DS011" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 236px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="236"></div>
+		<div id="MC_DS012" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 253px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="253"></div>
+		<div id="MC_DS013" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="189"></div>
+		<div id="MC_DS014" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 206px;
+			top: 1077px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1077" original-left="206"></div>
+		<div id="MC_DS015" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 142px;
+			top: 1105px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1105" original-left="142"></div>
+		<div id="MC_DS016" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 1091px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1091" original-left="108"></div>
+		<div id="MC_DS017" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 1075px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1075" original-left="108"></div>
+		<div id="MC_DS018" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 1060px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1060" original-left="108"></div>
+		<div id="MC_DS019" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 1044px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1044" original-left="108"></div>
+		<div id="MC_DS020" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 1011px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1011" original-left="108"></div>
+		<div id="MC_DS021" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 995px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="995" original-left="108"></div>
+		<div id="MC_DS022" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 982px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="982" original-left="108"></div>
+		<div id="MC_DS023" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 108px;
+			top: 968px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="968" original-left="108"></div>
+		<div id="MC_DS024" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 933px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="933" original-left="189"></div>
+		<div id="MC_DS025" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 947px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="947" original-left="189"></div>
+		<div id="MC_DS026" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 962px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="962" original-left="189"></div>
+		<div id="MC_DS027" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 189px;
+			top: 982px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="982" original-left="189"></div>
+  
+		<!-- G1 TO G14 -->
+		<div id="MC_G001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1235px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1235" original-left="1266"></div>
+  
+		<div id="MC_G002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1249px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1249" original-left="1266"></div>
+		<div id="MC_G003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1258px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1258" original-left="1266"></div>
+		<div id="MC_G004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1274px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1274" original-left="1266"></div>
+		<div id="MC_G005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1283px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1283" original-left="1266"></div>
+  
+		<div id="MC_G006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1291px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1291" original-left="1266"></div>
+		<div id="MC_G007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1299px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1299" original-left="1266"></div>
+		<div id="MC_G008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1307px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1307" original-left="1266"></div>
+		<div id="MC_G009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1314px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1314" original-left="1266"></div>
+		<div id="MC_G010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1322px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1322" original-left="1266"></div>
+		<div id="MC_G011" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1345px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1345" original-left="1266"></div>
+		<div id="MC_G012" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1352px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1352" original-left="1266"></div>
+		<div id="MC_G013" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1359px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1359" original-left="1266"></div>
+		<div id="MC_G014" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1366px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1366" original-left="1266"></div>
+  
+		<!-- GS1 TO GS16 -->
+		<div id="MC_GS001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1380px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1380" original-left="1266"></div>
+		<div id="MC_GS002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1387px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1387" original-left="1266"></div>
+		<div id="MC_GS003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1394px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1394" original-left="1266"></div>
+		<div id="MC_GS004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1401px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1401" original-left="1266"></div>
+		<div id="MC_GS005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1408px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1408" original-left="1266"></div>
+		<div id="MC_GS006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1415px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1415" original-left="1266"></div>
+		<div id="MC_GS007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1422px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1422" original-left="1266"></div>
+		<div id="MC_GS008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1429px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1429" original-left="1266"></div>
+		<div id="MC_GS009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1435px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1435" original-left="1266"></div>
+		<div id="MC_GS010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1441px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1441" original-left="1266"></div>
+		<div id="MC_G015" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1496px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1496" original-left="1266"></div>
+		<div id="MC_G016" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1266px;
+			top: 1504px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1504" original-left="1266"></div>
+  
+		<!-- P1 TO P11 -->
+		<div id="MC_P001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1671px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1671" original-left="1710"></div>
+		<div id="MC_P002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1657px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1657" original-left="1710"></div>
+		<div id="MC_P003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1642px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1642" original-left="1710"></div>
+		<div id="MC_P004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1628px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1628" original-left="1710"></div>
+		<div id="MC_P005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1614px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1614" original-left="1710"></div>
+		<div id="MC_P006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1599px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1599" original-left="1710"></div>
+		<div id="MC_P007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1585px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1585" original-left="1710"></div>
+		<div id="MC_P008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1570px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1570" original-left="1710"></div>
+		<div id="MC_P009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1556px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1556" original-left="1710"></div>
+		<div id="MC_P010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1541px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1541" original-left="1710"></div>
+		<div id="MC_P011" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1710px;
+			top: 1527px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1527" original-left="1710"></div>
+  
+		<!-- P17 TO P54 -->
+  
+		<div id="MC_P017" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1712px;
+			top: 1325px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1325" original-left="1712"></div>
+		<div id="MC_P018" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1712px;
+			top: 1311px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1311" original-left="1712"></div>
+		<div id="MC_P019" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1712px;
+			top: 1296px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1296" original-left="1712"></div>
+		<div id="MC_P020" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1712px;
+			top: 1282px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1282" original-left="1712"></div>
+		<div id="MC_P021" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1712px;
+			top: 1267px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1267" original-left="1712"></div>
+		<div id="MC_P022" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1241px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1241" original-left="1398"></div>
+		<div id="MC_P023" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1256px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1256" original-left="1398"></div>
+		<div id="MC_P024" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1270px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1270" original-left="1398"></div>
+		<div id="MC_P025" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1285px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1285" original-left="1398"></div>
+		<div id="MC_P026" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1299px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1299" original-left="1398"></div>
+		<div id="MC_P027" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1314px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1314" original-left="1398"></div>
+		<div id="MC_P028" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1328px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1328" original-left="1398"></div>
+		<div id="MC_P029" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1342px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1342" original-left="1398"></div>
+		<div id="MC_P030" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1357px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1357" original-left="1398"></div>
+		<div id="MC_P031" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1371px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1371" original-left="1398"></div>
+		<div id="MC_P032" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1386px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1386" original-left="1398"></div>
+		<div id="MC_P033" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1400px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1400" original-left="1398"></div>
+		<div id="MC_P034" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1415px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1415" original-left="1398"></div>
+		<div id="MC_P035" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1429px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1429" original-left="1398"></div>
+		<div id="MC_P036" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1443px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1443" original-left="1398"></div>
+		<div id="MC_P037" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1458px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1458" original-left="1398"></div>
+		<div id="MC_P038" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1472px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1472" original-left="1398"></div>
+		<div id="MC_P039" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1398px;
+			top: 1487px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1487" original-left="1398"></div>
+		<div id="MC_P040" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1537px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1537" original-left="1454"></div>
+		<div id="MC_P041" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1551px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1551" original-left="1454"></div>
+		<div id="MC_P042" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1566px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1566" original-left="1454"></div>
+		<div id="MC_P043" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1580px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1580" original-left="1454"></div>
+		<div id="MC_P044" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1595px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1595" original-left="1454"></div>
+		<div id="MC_P045" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1609px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1609" original-left="1454"></div>
+		<div id="MC_P046" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1624px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1624" original-left="1454"></div>
+		<div id="MC_P047" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1638px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1638" original-left="1454"></div>
+		<div id="MC_P048" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1652px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1652" original-left="1454"></div>
+		<div id="MC_P049" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1667px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1667" original-left="1454"></div>
+		<div id="MC_P050" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1681px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1681" original-left="1454"></div>
+		<div id="MC_P051" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1696px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1696" original-left="1454"></div>
+		<div id="MC_P052" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1710px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1710" original-left="1454"></div>
+		<div id="MC_P053" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1725px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1725" original-left="1454"></div>
+		<div id="MC_P054" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1454px;
+			top: 1739px;
+			width: 38px;
+			height: 4px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="38px" original-height="4px" original-top="1739" original-left="1454"></div>
+  
+		<!-- F1 TO F18 -->
+		<div id="MC_F001" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1635px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1635"></div>
+		<div id="MC_F002" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1609px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1609"></div>
+		<div id="MC_F003" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1592px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1592"></div>
+		<div id="MC_F004" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1571px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1571"></div>
+		<div id="MC_F005" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1546px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1546"></div>
+		<div id="MC_F006" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1528px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1528"></div>
+		<div id="MC_F007" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1511px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1511"></div>
+		<div id="MC_F008" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1499px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1499"></div>
+		<div id="MC_F009" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1489px;
+			top: 741px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="741" original-left="1489"></div>
+		<div id="MC_F010" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1629px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1629"></div>
+		<div id="MC_F011" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1619px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1619"></div>
+		<div id="MC_F012" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1609px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1609"></div>
+		<div id="MC_F013" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1599px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1599"></div>
+		<div id="MC_F014" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1590px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1590"></div>
+		<div id="MC_F015" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1580px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1580"></div>
+		<div id="MC_F016" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1570px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1570"></div>
+		<div id="MC_F017" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1559px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1559"></div>
+		<div id="MC_F018" class="trailer_div drag-location drop-location ui-draggable ui-draggable-handle ui-droppable" style="
+			position: absolute;
+			z-index: 100;
+			left: 1549px;
+			top: 1022px;
+			width: 5px;
+			height: 38px;
+			background-color: #fff;
+			border: none;
+			cursor: pointer;
+		  " onclick="get_data_popup(this.id)" title="slot" original-width="5px" original-height="38px" original-top="1022" original-left="1549"></div>
+  
+		<!---Body---->
+  
+		<!---Footer---->
+		<footer class="footer" style="width: 1343px;">
+		  <!--	 <div class="color_legends">
+				<table width="1280" border="0">
+				  <tbody>
+					<tr id="priorityLegend">
+					
+					 
+					   <td ><span style="color:grey" class="legend_text">Priority</span></td>
+					  <td ><span style="color:grey" class="legend_text"><div class="legend_square" style="background:rgb(0, 191, 255)" ></div> Low</span></td>
+					  <td ><span style="color:grey" class="legend_text"><div class="legend_square" style="background:#ffff00" ></div> Medium</span></td>
+					  <td ><span style="color:grey" class="legend_text"><div class="legend_square" style="background:red" ></div> High</span></td>
+					  
+					  
+					
+					  
+					</tr>
+				  </tbody>
+				</table>			
+		</div>-->
+		</footer>
+		<!---Footer---->
+  
+		<!--Loader-->
+		<div id="loader"></div>
+		<!--Loader-->
+	  </div>
+
+    <script
+      src="https://code.jquery.com/jquery-2.2.4.min.js"
+      integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.0/sweetalert.min.js"></script>
+
+    <!--  jquery ui -->
+    <script
+      src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+      integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Countdown JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countdown/2.6.0/countdown.min.js"></script>
+
+    <!-- Contains all the functions required for map to work -->
+    <script src="mapLibrary.js"></script>
+  </body>
+</html>
+<script>
+  var server = "https://heartlandqa.exotrac.com/MapHandlersDragDrop"; //Server for AJAX request
+  var facility_code = ""; //Facility code of the current facility
+
+  //Creating object of Status Name, Status Code and its Color Code
+  var status_details = {
+    Empty: { status_code: "11", color_code: "#0000FF" },
+    Partial: { status_code: "15", color_code: "#FFFF00" },
+    Loaded: { status_code: "12", color_code: "#00FF00" },
+    "Out of service": { status_code: "13", color_code: "#FF0000" },
+    // Loading: { status_code: "5", color_code: "#BFFF00" },
+    // "Loaded Outbound": { status_code: "8", color_code: "#000066" },
+    // "Loaded Inbound": { status_code: "9", color_code: "#006600" },
+    // "DC Transfer": { status_code: "10", color_code: "#cc3366" },
+    // Custom: { status_code: "11", color_code: "#47ff00" },
+    // Working: { status_code: "12", color_code: "#ff00ff" },
+    // "Loaded Storage": { status_code: "13", color_code: "#996600" },
+    // "Empty (Finished Goods)": { status_code: "2", color_code: "#aba907" },
+    // "Airwick overflow": { status_code: "55", color_code: "#00ffba" },
+    // "Plant Outbound": { status_code: "14", color_code: "#FF7F50" },
+    // Pallet: { status_code: "16", color_code: "#F4BC1C" },
+    // "Tandems Not slid/locked": { status_code: "25", color_code: "#dcbeff" },
+    // HOLD: { status_code: "26", color_code: "#8B008B" },
+    // "Out of Service - EMPTY": { status_code: "15", color_code: "#a5a5a5" },
+
+    // "Empty": { status_code: "11", color_code: "#ff0000" },
+    //"Hold": { status_code: "17", color_code: "#a5a5a5" },
+    //"Others": {status_code: "24", color_code : "#FF7F50"},
+    //"In Shop": { status_code: "21", color_code: "#00b050" },
+    //"Jackpot": {status_code: "JPOT", color_code : "#996600"},
+    //"Layover": { status_code: "16", color_code: "#fc0" },
+    //"Loaded": { status_code: "12", color_code: "#191970" },
+    //"Loaded Outbound": { status_code: "22", color_code: "skyblue" },
+
+    //"Setup": { status_code: "20", color_code: "gray" },
+    //"Spotted": { status_code: "18", color_code: "brown" },
+    //"Terminal": { status_code: "19", color_code: "pink" },
+  };
+
+  var container_status_details = {
+    Empty: { status_code: "1", color_code: "red" },
+    Full: { status_code: "7", color_code: "purple" },
+    Partial: { status_code: "8", color_code: "#ffa3a3" },
+    //"Others": {status_code: "24", color_code : "#FF7F50"},
+    Packaging: { status_code: "PKG", color_code: "#ffc000" },
+    //"Jackpot": {status_code: "JPOT", color_code : "#996600"},
+    Loading: { status_code: "LDG", color_code: "purple" },
+    Unloading: { status_code: "UNLD", color_code: "#191970" },
+  };
+
+  $(function () {
+    load_data();
+    initialize_options_legends();
+    get_all_id(); // to set the id's as title
+  });
+
+  // to set the id's as title
+  function get_all_id() {
+    $("#body")
+      .find("div")
+      .each(function () {
+        var titl = this.id.split("_")[1];
+        $(this).attr("title", titl);
+      });
+  }
+
+  /* DRAG TO SCROLL */
+  $(function () {
+    var curDown = false,
+      curYPos = 0,
+      curXPos = 0;
+    $(window).mousemove(function (m) {
+      if (curDown === true) {
+        $(window).scrollTop($(window).scrollTop() + (curYPos - m.pageY));
+        $(window).scrollLeft($(window).scrollLeft() + (curXPos - m.pageX));
+      }
+    });
+
+    $(window).mousedown(function (m) {
+      curDown = true;
+      curYPos = m.pageY;
+      curXPos = m.pageX;
+    });
+
+    $(window).mouseup(function () {
+      curDown = false;
+    });
+  });
+
+  $(document).on(
+    " mouseup mousedown",
+    ".header,  .sidenav, #data_container_popup",
+    function (e) {
+      e.stopPropagation();
+    }
+  );
+
+  /* DRAG TO SCROLL */
+
+  var header_width;
+  $(window).on("load resize ", function () {
+    if ($(window).width() < 1200) {
+      header_width = 1200;
+    } else {
+      header_width = $(window).width();
+      $(".header").css("left", 0);
+    }
+
+    $(".header").width(header_width);
+    $(".footer").width(header_width);
+  });
+
+  $(window).on("scroll", function (e) {
+    if ($(window).width() < 1200) {
+      var left = $(this).scrollLeft();
+      $(".header").css("left", -left);
+
+      var width = $(".header").width();
+      $(".header").width(header_width + left);
+    }
+  });
+
+  $(".map-menu").on("click", function () {
+    var top = $(this).attr("top_loc");
+    var left = $(this).attr("left_loc");
+
+    $("html, body").animate({ scrollTop: top - 200 }, "slow");
+    $("html, body").animate({ scrollLeft: left - 160 }, "slow");
+  });
+</script>
+
+<script>
+  //Script for zoom feature
+
+  var factor = 1;
+
+  $(".zoom-in").on("change", function (e) {
+    e.preventDefault();
+    $("#loader").show();
+
+    factor = $(this).val();
+
+    $("#body")
+      .children()
+      .each(function () {
+        //if the element is slot or location or pending request blinker
+        if (
+          $(this).hasClass("drag-location") ||
+          $(this).hasClass("pending-req-indicator") ||
+          $(this).hasClass("location_div") ||
+          $(this).hasClass("pendingReqDiv")
+        ) {
+          var e_width = $(this)
+            .attr("original-width")
+            .replace(/[^-\d\.]/g, "");
+          var new_width = e_width * factor;
+          var e_height = $(this)
+            .attr("original-height")
+            .replace(/[^-\d\.]/g, "");
+          var new_height = e_height * factor;
+          var e_top = $(this)
+            .attr("original-top")
+            .replace(/[^-\d\.]/g, "");
+          var new_top = e_top * factor - (factor * 100 - 100); //For margin fix
+          var e_left = $(this)
+            .attr("original-left")
+            .replace(/[^-\d\.]/g, "");
+          var new_left = e_left * factor - (factor * 10 - 10); //For margin fix
+
+          $(this).css("width", new_width + "px");
+          $(this).css("height", new_height + "px");
+          $(this).css("top", new_top);
+          $(this).css("left", new_left);
+        }
+        //if the element is count for location, it does not have width and height
+        else if ($(this).hasClass("location-count")) {
+          var e_top = $(this)
+            .attr("original-top")
+            .replace(/[^-\d\.]/g, "");
+          var new_top = e_top * factor - (factor * 100 - 100); //For margin fix
+          var e_left = $(this)
+            .attr("original-left")
+            .replace(/[^-\d\.]/g, "");
+          var new_left = e_left * factor - (factor * 10 - 10); //For margin fix
+
+          $(this).css("top", new_top);
+          $(this).css("left", new_left);
+        }
+        $("img").css("zoom", factor);
+      });
+    $("#loader").hide();
+  });
+
+  /*$('.zoom-in').val(1.5);
+	$('.zoom-in').trigger("change");*/
+
+  $("#body").bind("mousewheel", function (e) {
+    $("#loader").show();
+    e.preventDefault();
+
+    if (e.originalEvent.wheelDelta / 120 > 0) {
+      factor = factor + 0.1;
+      if (factor > 3) {
+        factor = 3;
+      }
+    } else {
+      factor = factor - 0.1;
+      if (factor < 0.5) {
+        factor = 0.5;
+      }
+    }
+
+    $("#body")
+      .children()
+      .each(function () {
+        //if the element is slot or location or pending request blinker
+        if (
+          $(this).hasClass("drag-location") ||
+          $(this).hasClass("pending-req-indicator") ||
+          $(this).hasClass("location_div") ||
+          $(this).hasClass("pendingReqDiv")
+        ) {
+          var e_width = $(this)
+            .attr("original-width")
+            .replace(/[^-\d\.]/g, "");
+          var new_width = e_width * factor;
+          var e_height = $(this)
+            .attr("original-height")
+            .replace(/[^-\d\.]/g, "");
+          var new_height = e_height * factor;
+          var e_top = $(this)
+            .attr("original-top")
+            .replace(/[^-\d\.]/g, "");
+          var new_top = e_top * factor - (factor * 100 - 100); //For margin fix
+          var e_left = $(this)
+            .attr("original-left")
+            .replace(/[^-\d\.]/g, "");
+          var new_left = e_left * factor - (factor * 10 - 10); //For margin fix
+
+          $(this).css("width", new_width + "px");
+          $(this).css("height", new_height + "px");
+          $(this).css("top", new_top);
+          $(this).css("left", new_left);
+        }
+        //if the element is count for location, it does not have width and height
+        else if ($(this).hasClass("location-count")) {
+          var e_top = $(this)
+            .attr("original-top")
+            .replace(/[^-\d\.]/g, "");
+          var new_top = e_top * factor - (factor * 100 - 100); //For margin fix
+          var e_left = $(this)
+            .attr("original-left")
+            .replace(/[^-\d\.]/g, "");
+          var new_left = e_left * factor - (factor * 10 - 10); //For margin fix
+
+          $(this).css("top", new_top);
+          $(this).css("left", new_left);
+        }
+        $("img").css("zoom", factor);
+      });
+    $(".zoom-in").val(factor);
+    $("#loader").hide();
+  });
+</script>
+
+<script>
+  /*$( "#body, #context_menu_popup " ).contextmenu(function(e) {
+  	 //Disable opening default menu when right clicked inside the map
+	e.preventDefault();
+});
+	
+$( "#body " ).click(function(e) {
+  	 //Disable opening default menu when right clicked inside the map
+	$("#context_menu_popup").hide();
+});
+
+
+ $(".drag-location").on("mousedown", function(e){
+	 
+	 //3 = Mouse right button
+       if(e.which == 3){
+		  
+          var id = $(this).attr("id");
+          
+		   
+		 hide_data_popup();
+		// calculatin the position of the parent div
+		var pos = $('#'+id).position();
+
+		// .outerWidth() takes into account border and padding.
+		var width = $('#'+id).outerWidth();   
+
+		var location_code = id.substring(3); 
+		$("#context_menu_popup").css({
+				position: "absolute",
+				top: (pos.top ) + "px", // change here, than change in if
+				left: (pos.left  + 10)  + "px"
+			}).show();
+		   
+       }
+   })*/
+</script>
+
+<script>
+  //Script fror adding original width, height, top,left attributes
+  /*$("#body").children().each(function(){
+				//if the element is slot or location or pending request blinker
+				if($(this).hasClass('drag-location'))
+				{
+					var e_width = $(this).css('width').replace(/[^-\d\.]/g, '');
+
+					var e_height = $(this).css('height').replace(/[^-\d\.]/g, '');
+
+					var e_top = $(this).css('top').replace(/[^-\d\.]/g, '');
+
+					var e_left = $(this).css('left').replace(/[^-\d\.]/g, '');
+
+
+					$(this).attr('original-width',e_width+"px"); 
+					$(this).attr('original-height',e_height+"px"); 
+					$(this).attr('original-top',e_top); 
+					$(this).attr('original-left',e_left); 
+				}
+				//if the element is count for location, it does not have width and height
+
+
+
+			});*/
+</script>
